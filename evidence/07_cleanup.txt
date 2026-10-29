@@ -1,0 +1,11 @@
+# Real output of ./ewb_vpc_peering_lab.sh cleanup (ap-southeast-2)
+Inventory saved first, then confirmed with: yes
+1. Terminate instances: done
+2. Peering routes and connection: deleted (Return: true)
+3. Security groups: sg-07adeed105df3b206, sg-01b3f2d92432ef718, sg-0c26c881d0463204b deleted (Return: true)
+4. Route tables and subnets: deleted
+5. Internet gateway: detached and deleted
+6. VPCs: deleted
+7. Key pair ewb-lab: deleted (Return: true)
+8. Verify nothing is left (filtered by project tag): no VPCs, instances or volumes listed
+   (empty lines above = nothing remaining)

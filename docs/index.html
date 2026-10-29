@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AWS VPC Peering Project – Farhan</title>
+<style>
+:root{--bg:#f6f3ec;--card:#fff;--ink:#0a1230;--mute:#5b6478;--line:#e2e5ec;--acc:#0aa5ff;--ok:#1a8f3c;--warn:#b26a00;--code:#0a1230;--codeink:#d6e4ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--card:#141b30;--ink:#eef2ff;--mute:#9aa6c4;--line:#27304a;--acc:#4cc0ff;--ok:#5fd38a;--warn:#ffb454;--code:#060a16;--codeink:#cfe0ff}}
+:root[data-theme="dark"]{--bg:#0b1020;--card:#141b30;--ink:#eef2ff;--mute:#9aa6c4;--line:#27304a;--acc:#4cc0ff;--ok:#5fd38a;--warn:#ffb454;--code:#060a16;--codeink:#cfe0ff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.7rem;margin:.2em 0}
+h2{font-size:1.2rem;margin:0 0 .6em}
+.sub{color:var(--mute);margin:0}
+.badge{display:inline-block;background:var(--acc);color:#04122a;border-radius:999px;padding:2px 12px;font-size:.8rem;font-weight:600}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px}
+.stat b{display:block;font-size:1.05rem}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mute);font-weight:600}
+pre{background:var(--code);color:var(--codeink);border-radius:10px;padding:12px;overflow-x:auto;font-size:.82rem;margin:.6em 0}
+.pending{border:1px dashed var(--warn);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:.9rem;margin:.6em 0}
+.ok{color:var(--ok);font-weight:600}
+.tag{font-size:.75rem;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--mute)}
+svg{width:100%;height:auto;display:block}
+svg text{fill:var(--ink);font-family:system-ui,sans-serif}
+.box{fill:var(--bg);stroke:var(--line)}
+details{margin-top:8px}
+summary{cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<span class="badge">AWS · EWB Cloud Labs · Project 01</span>
+<h1>VPC Peering: connect two VPCs privately</h1>
+<p class="sub">Student: <b>Farhan</b> · Region: <b>Asia Pacific (Sydney) ap-southeast-2</b> · Date: 29 Oct 2026</p>
+
+<section>
+<h2>Mission</h2>
+<p>Two private networks (VPC A and VPC B) must exchange traffic over private IPs through a VPC peering connection. One public bastion host in VPC A is used for administration. Both application servers stay private (no public IP).</p>
+<div class="grid">
+<div class="stat"><b>2 VPCs</b>10.10.0.0/16 · 10.20.0.0/16</div>
+<div class="stat"><b>3 EC2</b>bastion, App-A, App-B</div>
+<div class="stat"><b>1 peering</b>ewb-a-b-peer</div>
+<div class="stat"><b>0 NAT</b>no extra cost</div>
+</div>
+</section>
+
+<section>
+<h2>Architecture</h2>
+<svg viewBox="0 0 640 330" role="img" aria-label="VPC A and VPC B connected by peering">
+<rect class="box" x="10" y="10" width="290" height="310" rx="14"/>
+<text x="24" y="36" font-size="16" font-weight="600">VPC A · 10.10.0.0/16</text>
+<rect class="box" x="26" y="52" width="258" height="90" rx="10"/>
+<text x="38" y="78" font-size="14" font-weight="600">Public subnet 10.10.1.0/24</text>
+<text x="38" y="100" font-size="13">ewb-bastion · 10.10.1.10 + public IP</text>
+<text x="38" y="120" font-size="12" opacity=".7">route: 0.0.0.0/0 → IGW, 10.20.0.0/16 → pcx</text>
+<rect class="box" x="26" y="170" width="258" height="90" rx="10"/>
+<text x="38" y="196" font-size="14" font-weight="600">Private subnet 10.10.2.0/24</text>
+<text x="38" y="218" font-size="13">ewb-app-a · 10.10.2.10 (no public IP)</text>
+<text x="38" y="238" font-size="12" opacity=".7">route: 10.20.0.0/16 → pcx</text>
+<rect class="box" x="340" y="10" width="290" height="310" rx="14"/>
+<text x="354" y="36" font-size="16" font-weight="600">VPC B · 10.20.0.0/16</text>
+<rect class="box" x="356" y="170" width="258" height="90" rx="10"/>
+<text x="368" y="196" font-size="14" font-weight="600">Private subnet 10.20.1.0/24</text>
+<text x="368" y="218" font-size="13">ewb-app-b · 10.20.1.10 (no public IP)</text>
+<text x="368" y="238" font-size="12" opacity=".7">route: 10.10.0.0/16 → pcx</text>
+<line x1="284" y1="215" x2="356" y2="215" stroke="#0aa5ff" stroke-width="4"/>
+<text x="296" y="205" font-size="12" fill="#0aa5ff">peering</text>
+<text x="38" y="290" font-size="12" opacity=".7">Internet gateway ewb-igw-a is attached to VPC A only</text>
+<text x="368" y="290" font-size="12" opacity=".7">No internet gateway in VPC B</text>
+</svg>
+</section>
+
+<section>
+<h2>Resource inventory</h2>
+<div class="scroll"><table>
+<tr><th>Resource</th><th>Name tag</th><th>CIDR / IP</th><th>Actual ID</th></tr>
+<tr><td>VPC A</td><td>ewb-vpc-a</td><td>10.10.0.0/16</td><td>vpc-00f49d47537443322</td></tr>
+<tr><td>Public subnet</td><td>ewb-a-public</td><td>10.10.1.0/24</td><td>subnet-0718ae766923147a4</td></tr>
+<tr><td>Private subnet A</td><td>ewb-a-private</td><td>10.10.2.0/24</td><td>subnet-038cee6d5bf52d1e4</td></tr>
+<tr><td>VPC B</td><td>ewb-vpc-b</td><td>10.20.0.0/16</td><td>vpc-09420136c7e520e9f</td></tr>
+<tr><td>Private subnet B</td><td>ewb-b-private</td><td>10.20.1.0/24</td><td>subnet-09c8deb065379e500</td></tr>
+<tr><td>Internet gateway</td><td>ewb-igw-a</td><td>VPC A</td><td>igw-00e92380aa1afc8e7</td></tr>
+<tr><td>Bastion</td><td>ewb-bastion</td><td>10.10.1.10 + public IPv4</td><td>i-03a73d42a5779d5ea</td></tr>
+<tr><td>App-A</td><td>ewb-app-a</td><td>10.10.2.10</td><td>i-089aa121226d28050</td></tr>
+<tr><td>App-B</td><td>ewb-app-b</td><td>10.20.1.10</td><td>i-0a1671656b3519de6</td></tr>
+<tr><td>Peering</td><td>ewb-a-b-peer</td><td>A ↔ B (Active)</td><td>pcx-0df06200c1eb7b74a</td></tr>
+<tr><td>Route table (public A)</td><td>ewb-rt-a-public</td><td>subnet ewb-a-public</td><td>rtb-020bf49bade4b2b81</td></tr>
+<tr><td>Route table (private A)</td><td>ewb-rt-a-private</td><td>subnet ewb-a-private</td><td>rtb-0865d0f617ccab94c</td></tr>
+<tr><td>Route table (private B)</td><td>ewb-rt-b-private</td><td>subnet ewb-b-private</td><td>rtb-091df8ef8c0007dcc</td></tr>
+<tr><td>Security group</td><td>ewb-sg-bastion</td><td>VPC A</td><td>sg-07adeed105df3b206</td></tr>
+<tr><td>Security group</td><td>ewb-sg-app-a</td><td>VPC A</td><td>sg-01b3f2d92432ef718</td></tr>
+<tr><td>Security group</td><td>ewb-sg-app-b</td><td>VPC B</td><td>sg-0c26c881d0463204b</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>Routing design</h2>
+<div class="scroll"><table>
+<tr><th>Route table</th><th>Destination</th><th>Target</th></tr>
+<tr><td>ewb-rt-a-public</td><td>10.10.0.0/16</td><td>local</td></tr>
+<tr><td></td><td>0.0.0.0/0</td><td>ewb-igw-a</td></tr>
+<tr><td></td><td>10.20.0.0/16</td><td>peering (pcx)</td></tr>
+<tr><td>ewb-rt-a-private</td><td>10.10.0.0/16</td><td>local</td></tr>
+<tr><td></td><td>10.20.0.0/16</td><td>peering (pcx)</td></tr>
+<tr><td>ewb-rt-b-private</td><td>10.20.0.0/16</td><td>local</td></tr>
+<tr><td></td><td>10.10.0.0/16</td><td>peering (pcx)</td></tr>
+</table></div>
+<details><summary>Forward path and return path</summary>
+<p><b>Forward:</b> App-A (10.10.2.10) sends to 10.20.1.10. Its route table matches 10.20.0.0/16 and sends the packet into the peering connection to VPC B.</p>
+<p><b>Return:</b> App-B replies to 10.10.2.10. Its route table matches 10.10.0.0/16 and sends the reply back through the peering connection. Without this return route the reply is lost.</p>
+<p><b>Public route:</b> the bastion opens the SSH connection to App-B, so the public subnet also needs 10.20.0.0/16 → peering. The more specific /16 wins over 0.0.0.0/0.</p></details>
+</section>
+
+<section>
+<h2>Security group rules (inbound)</h2>
+<div class="scroll"><table>
+<tr><th>Group</th><th>Rule</th><th>Source</th></tr>
+<tr><td>ewb-sg-bastion</td><td>SSH TCP 22</td><td>my public IP /32</td></tr>
+<tr><td>ewb-sg-app-a</td><td>SSH TCP 22</td><td>10.10.1.10/32 (bastion)</td></tr>
+<tr><td>ewb-sg-app-a</td><td>ICMP echo request</td><td>10.20.1.10/32 (App-B)</td></tr>
+<tr><td>ewb-sg-app-b</td><td>SSH TCP 22</td><td>10.10.1.10/32 (bastion)</td></tr>
+<tr><td>ewb-sg-app-b</td><td>ICMP echo request</td><td>10.10.2.10/32 (App-A)</td></tr>
+</table></div>
+<p class="sub">App-B sees the bastion’s private IP as the SSH source, because the bastion opens its own connection to App-B (ProxyJump).</p>
+</section>
+
+<section>
+<h2>Test evidence</h2>
+<p class="sub">Real terminal output from my own run.</p>
+
+<h3>01 · Baseline (before peering) <span class="tag">expect: no replies</span></h3>
+<p class="ok">✔ Result: 100% packet loss, as expected (no peering yet)</p>
+<pre>ip-10-10-2-10.ap-southeast-2.compute.internal
+10.10.2.10
+PING 10.20.1.10 (10.20.1.10) 56(84) bytes of data.
+
+--- 10.20.1.10 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time 3130ms</pre>
+
+<h3>02 · Forward ping App-A → App-B <span class="tag">expect: 0% loss</span></h3>
+<p class="ok">✔ Result: 4 of 4 replies, 0% packet loss</p>
+<pre>ip-10-10-2-10.ap-southeast-2.compute.internal
+10.10.2.10
+PING 10.20.1.10 (10.20.1.10) 56(84) bytes of data.
+64 bytes from 10.20.1.10: icmp_seq=1 ttl=127 time=0.588 ms
+64 bytes from 10.20.1.10: icmp_seq=2 ttl=127 time=0.204 ms
+64 bytes from 10.20.1.10: icmp_seq=3 ttl=127 time=0.187 ms
+64 bytes from 10.20.1.10: icmp_seq=4 ttl=127 time=0.174 ms
+
+--- 10.20.1.10 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3128ms
+rtt min/avg/max/mdev = 0.174/0.288/0.588/0.173 ms</pre>
+
+<h3>03 · Reverse ping App-B → App-A <span class="tag">expect: 0% loss</span></h3>
+<p class="ok">✔ Result: 4 of 4 replies, 0% packet loss</p>
+<pre>ip-10-20-1-10.ap-southeast-2.compute.internal
+10.20.1.10
+PING 10.10.2.10 (10.10.2.10) 56(84) bytes of data.
+64 bytes from 10.10.2.10: icmp_seq=1 ttl=127 time=0.183 ms
+64 bytes from 10.10.2.10: icmp_seq=2 ttl=127 time=0.188 ms
+64 bytes from 10.10.2.10: icmp_seq=3 ttl=127 time=0.190 ms
+64 bytes from 10.10.2.10: icmp_seq=4 ttl=127 time=0.228 ms
+
+--- 10.10.2.10 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3110ms
+rtt min/avg/max/mdev = 0.183/0.197/0.228/0.017 ms</pre>
+
+<h3>04 · Private SSH to App-B through the bastion</h3>
+<p class="ok">✔ Result: shell reached on App-B through the bastion</p>
+<pre>$ ssh ewb-app-b "hostname; hostname -I"
+ip-10-20-1-10.ap-southeast-2.compute.internal
+10.20.1.10</pre>
+
+<h3>05 · Isolation: no public IPv4 on App-A / App-B</h3>
+<p class="ok">✔ Result: public IPv4 is None on both private hosts</p>
+<pre>|  ewb-app-b|  i-0a1671656b3519de6  |  10.20.1.10 |  None  |
+|  ewb-app-a|  i-089aa121226d28050  |  10.10.2.10 |  None  |</pre>
+
+<h3>06 · Controlled failure and recovery</h3>
+<p class="ok">✔ Result: pings work, stop when the ICMP rule is removed, and resume when it is restored</p>
+<pre>=== Before: ping works ===
+4 packets transmitted, 4 received, 0% packet loss, time 3073ms
+
+=== Removing ONLY the ICMP echo rule from ewb-sg-app-b ===
+
+=== During failure ===
+4 packets transmitted, 0 received, 100% packet loss, time 3108ms
+
+=== Restoring the exact rule ===
+
+=== After recovery ===
+4 packets transmitted, 4 received, 0% packet loss, time 3111ms</pre>
+<p class="sub">Why: the peering and routes stayed Active the whole time. Only the security group stopped the echo request, so reachability needs the route <b>and</b> the security rule.</p>
+</section>
+
+<section>
+<h2>Viva answers</h2>
+<details><summary>1. Why is the return route needed?</summary><p>A reply must travel back too. If only one side has a route, the request arrives but the answer cannot find its way home.</p></details>
+<details><summary>2. Why is the App-B SSH source the bastion’s private IP?</summary><p>The bastion opens a separate SSH connection to App-B from inside the network, so App-B sees the bastion’s private address, not my laptop.</p></details>
+<details><summary>3. Why does Active peering not guarantee a successful ping?</summary><p>Peering is only the link. Route tables must point to it on both sides and security groups must allow the traffic.</p></details>
+<details><summary>4. Can VPC B use VPC A’s internet gateway over peering?</summary><p>No. Peering does not pass internet access through to the other VPC.</p></details>
+</section>
+
+<section>
+<h2>Cleanup</h2>
+<pre>1. Terminate instances: done (bastion, App-A, App-B)
+2. Peering routes and connection pcx-0df06200c1eb7b74a: deleted
+3. Security groups: 3 deleted (bastion, app-a, app-b)
+4. Route tables and subnets: deleted
+5. Internet gateway ewb-igw-a: detached and deleted
+6. VPCs ewb-vpc-a and ewb-vpc-b: deleted
+7. Key pair ewb-lab: deleted
+8. Verification by tag Project = EWB-VPC-Peering: no VPCs, instances or volumes remaining</pre><p class="ok">Result: all lab resources removed, so no further charges. This page is the permanent record of the lab.</p>
+<h3>What I learned</h3>
+<div class="pending">Pending: write 3–5 sentences in your own words.</div>
+</section>
+</main>
+</body>
+</html>

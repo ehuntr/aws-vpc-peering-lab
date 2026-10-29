@@ -1,0 +1,24 @@
+# Real CloudShell output, region ap-southeast-2, student farhan
+# (resource IDs from this run: peering pcx-0df06200c1eb7b74a, App-A i-089aa121226d28050, App-B i-0a1671656b3519de6)
+
+TEST 01 Baseline (before peering): ping App-A -> App-B
+4 packets transmitted, 0 received, 100% packet loss, time 3130ms
+
+Phase 6: peering pcx-0df06200c1eb7b74a status: active
+Phase 7: routes added on all three route tables
+
+TEST 02 Forward (App-A -> App-B): 4 transmitted, 4 received, 0% packet loss, time 3128ms
+  rtt min/avg/max/mdev = 0.174/0.288/0.588/0.173 ms
+TEST 03 Reverse (App-B -> App-A): 4 transmitted, 4 received, 0% packet loss, time 3110ms
+  rtt min/avg/max/mdev = 0.183/0.197/0.228/0.017 ms
+TEST 04 Private SSH: ssh ewb-app-b -> ip-10-20-1-10.ap-southeast-2.compute.internal / 10.20.1.10
+TEST 05 Isolation:
+  ewb-app-b  i-0a1671656b3519de6  10.20.1.10  None
+  ewb-app-a  i-089aa121226d28050  10.10.2.10  None
+
+TEST 06 Controlled failure
+  Before:          4 transmitted, 4 received, 0% packet loss
+  ICMP echo rule removed from ewb-sg-app-b
+  During failure:  4 transmitted, 0 received, 100% packet loss
+  Rule restored
+  After recovery:  4 transmitted, 4 received, 0% packet loss

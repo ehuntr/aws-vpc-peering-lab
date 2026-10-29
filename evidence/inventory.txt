@@ -1,0 +1,41 @@
+# Real output of ./ewb_vpc_peering_lab.sh inventory (ap-southeast-2, student farhan)
+AZ=ap-southeast-2a
+I_APP_A=i-089aa121226d28050
+I_APP_B=i-0a1671656b3519de6
+I_BASTION=i-03a73d42a5779d5ea
+IGW=igw-00e92380aa1afc8e7
+PCX=pcx-0df06200c1eb7b74a
+RT_A_PRIV=rtb-0865d0f617ccab94c
+RT_A_PUB=rtb-020bf49bade4b2b81
+RT_B_PRIV=rtb-091df8ef8c0007dcc
+SG_APP_A=sg-01b3f2d92432ef718
+SG_APP_B=sg-0c26c881d0463204b
+SG_BASTION=sg-07adeed105df3b206
+SUB_A_PRIV=subnet-038cee6d5bf52d1e4
+SUB_A_PUB=subnet-0718ae766923147a4
+SUB_B_PRIV=subnet-09c8deb065379e500
+VPC_A=vpc-00f49d47537443322
+VPC_B=vpc-09420136c7e520e9f
+
+Route tables
+ewb-rt-b-private  rtb-091df8ef8c0007dcc  subnet-09c8deb065379e500
+   10.10.0.0/16 -> pcx-0df06200c1eb7b74a
+   10.20.0.0/16 -> local
+ewb-rt-a-private  rtb-0865d0f617ccab94c  subnet-038cee6d5bf52d1e4
+   10.10.0.0/16 -> local
+   10.20.0.0/16 -> pcx-0df06200c1eb7b74a
+ewb-rt-a-public   rtb-020bf49bade4b2b81  subnet-0718ae766923147a4
+   10.10.0.0/16 -> local
+   10.20.0.0/16 -> pcx-0df06200c1eb7b74a
+   0.0.0.0/0   -> igw-00e92380aa1afc8e7
+
+Security group inbound rules
+sg-07adeed105df3b206 (bastion)  tcp 22      <my public IP>/32
+sg-01b3f2d92432ef718 (app-a)    tcp 22      10.10.1.10/32
+sg-01b3f2d92432ef718 (app-a)    icmp 8/0    10.20.1.10/32
+sg-0c26c881d0463204b (app-b)    tcp 22      10.10.1.10/32
+sg-0c26c881d0463204b (app-b)    icmp 8/0    10.10.2.10/32
+
+Peering: pcx-0df06200c1eb7b74a active
+  requester vpc-00f49d47537443322 10.10.0.0/16
+  accepter  vpc-09420136c7e520e9f 10.20.0.0/16
