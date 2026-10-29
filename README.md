@@ -5,7 +5,7 @@
 Two private AWS networks connected with **VPC peering**, administered through a public **bastion host**, and verified with positive and negative tests. Built for the EWB Courses *AWS Architect Associate* project (Project 01).
 
 **Student:** Farhan · **Region:** Asia Pacific (Sydney) `ap-southeast-2` · **Date:** 29 Oct 2026
-**Live report:** _add your GitHub Pages link here_ · **Full report:** [REPORT.md](REPORT.md)
+**Live report:** https://ehuntr.github.io/aws-vpc-peering-lab/ · **Full report:** [REPORT.md](REPORT.md)
 
 ## Architecture
 
